@@ -30,35 +30,36 @@ public class DataParserImplTest {
     @Test
     void testParseTableCountSuccess() throws RestaurantException {
         int tables = parser.parseTableCount(mockCorrectLines);
-        assertEquals(3, tables, "Количество столов должно быть равно 3");
+        assertEquals(3, tables, "Table count must be exactly 3");
     }
 
     @Test
     void testParseTotalDishesSuccess() throws RestaurantException {
         int dishes = parser.parseTotalDishes(mockCorrectLines);
-        assertEquals(15, dishes, "Общее количество блюд должно быть равно 15");
+        assertEquals(15, dishes, "Total dishes count must be exactly 15");
     }
 
     @Test
     void testParseCompaniesSpecsSuccess() throws RestaurantException {
         List<Integer> specs = parser.parseCompaniesSpecs(mockCorrectLines);
         
-        assertNotNull(specs, "Список спецификаций не должен быть null");
-        assertEquals(4, specs.size(), "Должно быть распарсено ровно 4 компании");
+        assertNotNull(specs, "Company specifications list must not be null");
+        assertEquals(4, specs.size(), "Exactly 4 company specifications should be parsed");
         assertEquals(2, specs.get(0));
         assertEquals(3, specs.get(3));
     }
 
     @Test
     void testParseTableCountThrowsRestaurantException() {
-        List<String> badLines = Collections.singletonList("НЕ_ЧИСЛО");
+        List<String> badLines = Collections.singletonList("NOT_A_NUMBER");
 
         RestaurantException exception = assertThrows(RestaurantException.class, () -> {
             parser.parseTableCount(badLines);
         });
 
-        assertTrue(exception.getMessage().contains("Ошибка парсинга количества столов"));
-        assertNotNull(exception.getCause(), "Первопричина (cause) должна быть сохранена");
+        assertTrue(exception.getMessage().contains("Failed to parse table count"), 
+                "Exception message should contain the correct English description");
+        assertNotNull(exception.getCause(), "The root cause exception must be preserved");
         assertTrue(exception.getCause() instanceof NumberFormatException);
     }
 
@@ -68,7 +69,7 @@ public class DataParserImplTest {
 
         assertThrows(RestaurantException.class, () -> {
             parser.parseTotalDishes(incompleteLines);
-        }, "Метод должен упасть с RestaurantException, если строк не хватает");
+        }, "Method must throw RestaurantException when necessary input lines are missing");
     }
 
     @Test
@@ -84,6 +85,7 @@ public class DataParserImplTest {
             parser.parseCompaniesSpecs(brokenSpecsLines);
         });
 
-        assertTrue(exception.getMessage().contains("Конфигурация нарушена"));
+        assertTrue(exception.getMessage().contains("Configuration mismatch"), 
+                "Exception message should report a configuration mismatch in English");
     }
 }

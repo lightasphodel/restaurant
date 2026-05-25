@@ -11,11 +11,11 @@ public class FreeStateImpl implements TableState {
     @Override
     public void nextState(Table table) {
         table.setState(new OccupiedStateImpl());
-        logger.info("Стол №{} переведен в состояние: ЗАНЯТ", table.getId());
+        logger.info("Table #{} changed state to: OCCUPIED", table.getId());
     }
 
     @Override
     public String getStatus() {
-        return "Свободен";
+        return "Free";
     }
 }

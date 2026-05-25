@@ -11,11 +11,11 @@ public class OccupiedStateImpl implements TableState {
     @Override
     public void nextState(Table table) {
         table.setState(new ServingStateImpl());
-        logger.info("Стол №{} переведен в состояние: ОБСЛУЖИВАЕТСЯ", table.getId());
+        logger.info("Table #{} changed state to: SERVING", table.getId());
     }
 
     @Override
     public String getStatus() {
-        return "Занят";
+        return "Occupied";
     }
 }

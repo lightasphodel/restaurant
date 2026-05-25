@@ -19,7 +19,7 @@ public class Main {
     private static final Logger logger = LogManager.getLogger(Main.class);
 
     public static void main(String[] args) {
-        logger.info("Начало работы программы");
+        logger.info("Thec programm has been started");
 
         DataReader reader = new DataReaderImpl();
         DataParser parser = new DataParserImpl();
@@ -36,7 +36,7 @@ public class Main {
             companiesSpecs = parser.parseCompaniesSpecs(rawLines);
             
         } catch (RestaurantException e) {
-            logger.error("Критическая ошибка при подготовке данных приложения!", e);
+            logger.error("Critical error preparing application data!", e);
             return;
         }
 
@@ -45,7 +45,7 @@ public class Main {
 
         ExecutorService executorService = Executors.newFixedThreadPool(companiesSpecs.size());
 
-        logger.info("Запуск потоков посетителей ресторана...");
+        logger.info("Launching restaurant customer flows...");
         for (int i = 0; i < companiesSpecs.size(); i++) {
             Runnable company = new VisitorCompany(i + 1, companiesSpecs.get(i));
             executorService.execute(company);
@@ -61,6 +61,6 @@ public class Main {
             Thread.currentThread().interrupt();
         }
 
-        logger.info("Конец работы программы");
+        logger.info("The programm has been finished");
     }
 }

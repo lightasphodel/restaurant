@@ -11,11 +11,11 @@ public class ServingStateImpl implements TableState {
     @Override
     public void nextState(Table table) {
         table.setState(new FreeStateImpl());
-        logger.info("Стол №{} переведен в состояние: СВОБОДЕН", table.getId());
+        logger.info("Table #{} changed state to: FREE", table.getId());
     }
 
     @Override
     public String getStatus() {
-        return "Обслуживается";
+        return "Served";
     }
 }

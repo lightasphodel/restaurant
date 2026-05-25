@@ -1,5 +1,6 @@
 package com.lena.restaurant.entity;
 
+import com.lena.restaurant.exception.RestaurantException;
 import com.lena.restaurant.pool.Restaurant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +18,7 @@ public class VisitorCompany implements Runnable {
 
     @Override
     public void run() {
-        logger.info("Компания №{} прибыла в ресторан. Требуется блюд: {}", companyId, dishesNeeded);
+        logger.info("Company #{} arrived at the restaurant. Dishes needed: {}", companyId, dishesNeeded);
         Restaurant restaurant = Restaurant.getInstance();
         Table allocatedTable = null;
 
@@ -29,10 +30,12 @@ public class VisitorCompany implements Runnable {
             restaurant.orderDishes(companyId, dishesNeeded);
 
             TimeUnit.MILLISECONDS.sleep(600);
-            logger.info("Компания №{} закончила ужинать", companyId);
+            logger.info("Company #{} finished dining.", companyId);
 
+        } catch (RestaurantException e) {
+            logger.error("Restaurant business logic error for company #{}: {}", companyId, e.getMessage(), e);
         } catch (InterruptedException e) {
-            logger.error("Поток компании №{} был аварийно прерван", companyId, e);
+            logger.error("Company thread #{} was unexpectedly interrupted", companyId, e);
             Thread.currentThread().interrupt();
         } finally {
             if (allocatedTable != null) {

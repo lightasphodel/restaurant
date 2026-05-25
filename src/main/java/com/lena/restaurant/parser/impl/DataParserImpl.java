@@ -11,33 +11,33 @@ public class DataParserImpl implements DataParser {
     @Override
     public int parseTableCount(List<String> lines) throws RestaurantException {
         if (lines == null || lines.isEmpty()) {
-            throw new RestaurantException("Невозможно спарсить количество столов: список строк пуст");
+            throw new RestaurantException("Cannot parse table count: lines list is null or empty");
         }
         
         try {
             return Integer.parseInt(lines.get(0));
         } catch (NumberFormatException e) {
-            throw new RestaurantException("Ошибка парсинга количества столов. Строка некорректна: " + lines.get(0), e);
+            throw new RestaurantException("Failed to parse table count. Invalid string format: " + lines.get(0), e);
         }
     }
 
     @Override
     public int parseTotalDishes(List<String> lines) throws RestaurantException {
         if (lines == null || lines.size() < 2) {
-            throw new RestaurantException("Невозможно спарсить количество блюд: отсутствует вторая строка");
+            throw new RestaurantException("Cannot parse total dishes count: second line is missing");
         }
         
         try {
             return Integer.parseInt(lines.get(1));
         } catch (NumberFormatException e) {
-            throw new RestaurantException("Ошибка парсинга общего количества блюд. Строка некорректна: " + lines.get(1), e);
+            throw new RestaurantException("Failed to parse total dishes count. Invalid string format: " + lines.get(1), e);
         }
     }
 
     @Override
     public List<Integer> parseCompaniesSpecs(List<String> lines) throws RestaurantException {
         if (lines == null || lines.size() < 4) {
-            throw new RestaurantException("Недостаточно строк в файле для парсинга спецификаций компаний");
+            throw new RestaurantException("Insufficient lines in file to parse companies specifications");
         }
 
         List<Integer> companiesSpecs = new ArrayList<>();
@@ -49,8 +49,8 @@ public class DataParserImpl implements DataParser {
             String[] specs = rawSpecs.split("\\s+");
             
             if (specs.length < companyCount) {
-                throw new RestaurantException("Конфигурация нарушена: указано компаний " + companyCount 
-                        + ", но в файле найдено настроек только для " + specs.length);
+                throw new RestaurantException("Configuration mismatch: company count set to " + companyCount 
+                        + ", but only " + specs.length + " specifications found in file");
             }
 
             for (int i = 0; i < companyCount; i++) {
@@ -60,7 +60,7 @@ public class DataParserImpl implements DataParser {
             return companiesSpecs;
             
         } catch (NumberFormatException e) {
-            throw new RestaurantException("Ошибка разбора числовых данных в структуре компаний", e);
+            throw new RestaurantException("Failed to parse numeric data within companies structure", e);
         }
     }
 }

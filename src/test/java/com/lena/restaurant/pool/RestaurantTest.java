@@ -1,9 +1,12 @@
 package com.lena.restaurant.pool;
 
 import com.lena.restaurant.entity.Table;
+import com.lena.restaurant.exception.RestaurantException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,25 +20,31 @@ public class RestaurantTest {
     private Restaurant restaurant;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         restaurant = Restaurant.getInstance();
+        
+        Field tablesField = Restaurant.class.getDeclaredField("tables");
+        tablesField.setAccessible(true);
+        List<?> tables = (List<?>) tablesField.get(restaurant);
+        tables.clear();
+
         restaurant.init(2, 10);
     }
 
     @Test
     void testSingletonInstanceIdentity() {
         Restaurant anotherInstance = Restaurant.getInstance();
-        assertSame(restaurant, anotherInstance, "Синглтон должен возвращать один и тот же объект");
+        assertSame(restaurant, anotherInstance, "Singleton must always return the exact same object identity");
     }
 
     @Test
-    void testOccupyAndReleaseTable() throws InterruptedException {
+    void testOccupyAndReleaseTable() throws RestaurantException {
         Table table1 = restaurant.occupyTable(101);
-        assertNotNull(table1, "Стол должен успешно выделиться");
+        assertNotNull(table1, "Table should be successfully allocated");
         assertEquals("Занят", table1.getState().getStatus());
 
         Table table2 = restaurant.occupyTable(102);
-        assertNotNull(table2);
+        assertNotNull(table2, "Second table should be successfully allocated");
 
         restaurant.releaseTable(table1, 101);
         assertEquals("Свободен", table1.getState().getStatus());
@@ -55,9 +64,8 @@ public class RestaurantTest {
             executorService.execute(() -> {
                 try {
                     restaurant.orderDishes(companyId, dishesPerCompany);
-                } catch (InterruptedException e) {
+                } catch (RestaurantException e) {
                     exceptionCounter.incrementAndGet();
-                    Thread.currentThread().interrupt();
                 } finally {
                     latch.countDown();
                 }
@@ -66,8 +74,8 @@ public class RestaurantTest {
 
         boolean completed = latch.await(5, TimeUnit.SECONDS);
 
-        assertTrue(completed, "Все потоки должны были завершить заказы вовремя");
-        assertEquals(0, exceptionCounter.get(), "Во время параллельных заказов не должно быть исключений");
+        assertTrue(completed, "All company threads should complete their orders in time");
+        assertEquals(0, exceptionCounter.get(), "No business logic exceptions should occur during concurrent ordering");
         
         executorService.shutdown();
     }

@@ -1,11 +1,13 @@
 package com.lena.restaurant.pool;
 
 import com.lena.restaurant.entity.Table;
+import com.lena.restaurant.exception.RestaurantException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -37,23 +39,32 @@ public class Restaurant {
             for (int i = 1; i <= tableCount; i++) {
                 tables.add(new Table(i));
             }
-            logger.info("Ресторан успешно запущен. Столов: {}, Блюд на кухне: {}", tableCount, initialDishes);
+            logger.info("Restaurant successfully initialized. Tables: {}, Dishes available: {}", tableCount, initialDishes);
         } finally {
             lock.unlock();
         }
     }
 
-    public Table occupyTable(int companyId) throws InterruptedException {
+    public Table occupyTable(int companyId) throws RestaurantException {
         lock.lock();
         try {
-            while (getFreeTable() == null) {
-                logger.info("Компания №{} ожидает свободный столик...", companyId);
-                tableAvailable.await();
+            while (!getFreeTable().isPresent()) {
+                logger.info("Company #{} is waiting for an available table...", companyId);
+                try {
+                    tableAvailable.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RestaurantException("Company thread #" + companyId + " was interrupted while waiting for a table", e);
+                }
             }
-            Table table = getFreeTable();
+            
+            Table table = getFreeTable()
+                    .orElseThrow(() -> new RestaurantException("Critical error: free table vanished from the pool!"));
+            
             table.changeState(); 
-            logger.info("Компания №{} села за стол №{}", companyId, table.getId());
+            logger.info("Company #{} took table #{}", companyId, table.getId());
             return table;
+            
         } finally {
             lock.unlock();
         }
@@ -63,35 +74,37 @@ public class Restaurant {
         lock.lock();
         try {
             table.changeState();
-            logger.info("Компания №{} освободила стол №{}", companyId, table.getId());
+            logger.info("Company #{} released table #{}", companyId, table.getId());
             tableAvailable.signalAll(); 
         } finally {
             lock.unlock();
         }
     }
 
-    public void orderDishes(int companyId, int count) throws InterruptedException {
+    public void orderDishes(int companyId, int count) throws RestaurantException {
         lock.lock();
         try {
             while (availableDishes < count) {
-                logger.warn("На кухне недостаточно еды для компании №{}. Требуется: {}, Доступно: {}. Ожидание...", 
+                logger.warn("Kitchen out of food for company #{}. Required: {}, Available: {}. Waiting...", 
                         companyId, count, availableDishes);
-                kitchenReady.await();
+                try {
+                    kitchenReady.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RestaurantException("Company thread #" + companyId + " was interrupted while waiting for food", e);
+                }
             }
             availableDishes -= count;
-            logger.info("Компания №{} получила заказ (порций: {}). Оборот кухни: осталось блюд -> {}", 
+            logger.info("Company #{} received order (portions: {}). Remaining dishes in kitchen: {}", 
                     companyId, count, availableDishes);
         } finally {
             lock.unlock();
         }
     }
 
-    private Table getFreeTable() {
-        for (Table t : tables) {
-            if ("Свободен".equals(t.getState().getStatus())) {
-                return t;
-            }
-        }
-        return null;
+    private Optional<Table> getFreeTable() {
+        return tables.stream()
+                .filter(t -> "Свободен".equals(t.getState().getStatus()))
+                .findFirst();
     }
 }

@@ -17,16 +17,16 @@ public class DataReaderImpl implements DataReader {
     @Override
     public List<String> readLines(String filePath) throws RestaurantException {
         List<String> lines = new ArrayList<>();
-        logger.info("Чтение файла по пути: {}", filePath);
+        logger.info("Cannot read the path: {}", filePath);
 
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
-                lines.add(line.trim());
+                lines.add(line.strip());
             }
         } catch (IOException e) {
-            logger.error("Ошибка ввода-вывода при чтении файла: {}", filePath, e);
-            throw new RestaurantException("Не удалось прочитать файл: " + filePath, e);
+            logger.error("The input-output error: {}", filePath, e);
+            throw new RestaurantException("Cannot read the file: " + filePath, e);
         }
 
         return lines;
